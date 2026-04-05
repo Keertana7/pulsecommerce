@@ -1,0 +1,175 @@
+/* MAIN DASHBOARD */
+.dashboard {
+  display: flex;
+  height: 100vh;
+  background: #0f172a;
+  color: white;
+  padding: 20px; 
+}
+
+/* LEFT SIDE (PHONES) */
+.phones {
+  display: flex;
+  gap: 30px;
+  flex: 3;
+  justify-content: center;
+  align-items: center;
+  margin-right: 20px; 
+}
+
+/* PHONE STYLE */
+.phone {
+  width: 240px;
+  height: 500px;
+  border-radius: 30px;
+  background: #0f172a;
+  padding: 12px;
+  box-shadow: 0 0 25px rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  border: 4px solid #111;
+  transition: 0.3s;
+}
+
+.phone:hover {
+  transform: translateY(-5px);
+}
+.phone-header {
+  text-align: center;
+  font-weight: bold;
+  margin-bottom: 8px;
+  padding: 6px;
+  border-radius: 10px;
+  background: #111827;
+}
+.phone-input {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.phone-input input {
+  flex: 1;
+  padding: 6px;
+  border-radius: 6px;
+  border: none;
+  outline: none;
+  background: #020617;
+  color: white;
+}
+
+.phone-input button {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  background: #22c55e;
+  color: white;
+  cursor: pointer;
+}
+.phone.whatsapp {
+  box-shadow: 0 0 25px rgba(37, 211, 102, 0.3);
+}
+
+.phone.instagram {
+  box-shadow: 0 0 25px rgba(193, 53, 132, 0.3);
+}
+
+.phone.sms {
+  box-shadow: 0 0 25px rgba(150, 150, 150, 0.2);
+}
+/* DIFFERENT COLORS */
+.whatsapp {
+  border: 2px solid #25D366;
+}
+
+.instagram {
+  border: 2px solid #C13584;
+}
+
+.sms {
+  border: 2px solid #888;
+}
+.whatsapp .phone-header {
+  background: #25D366;
+  color: black;
+}
+
+.instagram .phone-header {
+  background: #C13584;
+}
+
+.sms .phone-header {
+  background: #6b7280;
+}
+/* CHAT AREA */
+.chat-box {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  background: #0f172a;
+  border-radius: 12px;
+}
+.chat-box::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-box::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 10px;
+}
+/* MESSAGE */
+.msg {
+  margin: 6px;
+  padding: 10px;
+  border-radius: 14px;
+  max-width: 75%;
+  font-size: 13px;
+  line-height: 1.4;
+  animation: fadeIn 0.3s ease;
+  transition: 0.2s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.msg:hover {
+  transform: scale(1.02);
+}
+.msg.user {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  align-self: flex-end;
+}
+
+.msg.bot {
+  background: #1e293b;
+  align-self: flex-start;
+}
+/* RIGHT PANEL */
+.side-panel h2 {
+  margin-bottom: 20px;
+  font-size: 20px;
+  letter-spacing: 1px;
+}
+.card {
+  background: #1f2937;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  background: #374151;
+}
