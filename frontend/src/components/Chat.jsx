@@ -15,6 +15,10 @@ import {
 export default function Chat() {
   const bottomRef = useRef();
   const [messages, setMessages] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [search, setSearch] = useState("");
+  const [cart, setCart] = useState([]);
+  const [priceFilter, setPriceFilter] = useState("all");
   const [whatsappInput, setWhatsappInput] = useState("");
   const [instagramInput, setInstagramInput] = useState("");
   const [smsInput, setSmsInput] = useState("");
@@ -35,7 +39,11 @@ export default function Chat() {
 
     return () => unsubscribe();
   }, []);
-
+  useEffect(() => {
+    fetch("https://dummyjson.com/products")
+      .then(res => res.json())
+      .then(data => setProducts(data.products));
+  }, []);
   const sendMessage = async (platform, inputValue, setInputFn) => {
   if (!inputValue) return;
 
@@ -81,12 +89,90 @@ export default function Chat() {
 
   setInputFn(""); // clear input
 };
+  const filteredProducts = products.filter((p) => {
+  const matchesSearch = p.title.toLowerCase().includes(search.toLowerCase());
 
+  const matchesPrice =
+    priceFilter === "all" ||
+    (priceFilter === "low" && p.price < 1000) ||
+    (priceFilter === "medium" && p.price >= 1000 && p.price <= 5000) ||
+    (priceFilter === "high" && p.price > 5000);
+
+  return matchesSearch && matchesPrice;
+});
+
+  const addToCart = (product) => {
+    setCart([...cart, product]);
+    trackEvent("add_to_cart", product.title);
+  };
  
+  const trackEvent = async (type, product) => {
+  console.log("EVENT:", type, product);
 
+  try {
+    await addDoc(collection(db, "events"), {
+      type: type,
+      product: product,
+      userId: "user_123",
+      timestamp: serverTimestamp()
+    });
+  } catch (err) {
+    console.error("Error storing event:", err);
+  }
+};
   return (
     <div className="dashboard">
+    <div className="top-bar">
 
+  <input
+    placeholder="Search products..."
+    value={search}
+    onChange={(e) => {
+    setSearch(e.target.value);
+    trackEvent("search", e.target.value);
+}}
+  />
+
+  <select onChange={(e) => setPriceFilter(e.target.value)}>
+    <option value="all">All Prices</option>
+    <option value="low">Low</option>
+    <option value="medium">Medium</option>
+    <option value="high">High</option>
+  </select>
+
+  <div className="cart">
+    🛒 {cart.length}
+  </div>
+
+</div>
+
+
+
+  {/* PRODUCTS SECTION */}
+  <div className="products-section">
+
+    <div className="product-grid">
+      {filteredProducts.map((p) => (
+        <div key={p.id} className="product-card">
+          <img src={p.thumbnail} alt={p.title} />
+          <h4>{p.title}</h4>
+          <p>₹ {p.price}</p>
+
+          <button onClick={() => trackEvent("view", p.title)}>
+            View
+          </button>
+
+          <button onClick={() => addToCart(p)}>
+            Add to Cart
+          </button>
+        </div>
+      ))}
+    </div>
+
+  </div>
+
+
+<div className="main-content">
   {/* LEFT: PHONES */}
   <div className="phones">
 
@@ -226,7 +312,7 @@ export default function Chat() {
 
 
   </div>
-
+</div>
 </div>
   );
 }
