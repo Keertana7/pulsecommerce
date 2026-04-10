@@ -1,0 +1,7 @@
+[
+  {"name": "Running Shoes", "price": 2000, "category": "shoes"},
+  {"name": "Casual Shoes", "price": 1500, "category": "shoes"},
+  {"name": "Sports Shoes", "price": 2500, "category": "shoes"},
+  {"name": "Smartphone X", "price": 15000, "category": "electronics"},
+  {"name": "Budget Phone", "price": 10000, "category": "electronics"}
+]

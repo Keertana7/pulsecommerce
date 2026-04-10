@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../../ai_engine"
+		},
+		{
+			"name": "pulsecommerce",
+			"path": ".."
+		}
+	],
+	"settings": {}
+}
