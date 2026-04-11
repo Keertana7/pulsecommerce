@@ -75,8 +75,8 @@ def generate_response_api(req: UserRequest):
     print(f"[USER]: {req.message}")
     print(f"[INTENT]: {intent}")
     print(f"[ENTITIES]: {entities}")
-    print(f"[PRODUCTS]: {product_suggestions}")
-
+    print(f"[PRODUCT COUNT]: {len(product_suggestions)}")
+    
     return {
         "reply": reply,
         "intent": intent,

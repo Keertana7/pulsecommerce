@@ -9,12 +9,14 @@ def generate_response(intent, entities, context, products):
 
         reply = "Here are some options:\n"
         for p in products:
-            reply += f"{p['name']} - ₹{p['price']}\n"
+            name = p.get('name', 'Unknown')
+            price = p.get('price', 'N/A')
+            reply += f"• {name} - ₹{price}\n"
 
         # update context
-        context.set_last_product(products[0]["name"])
+        context.set_last_product(products[0].get("name", "item"))
 
-        return reply
+        return reply.rstrip()
 
     if intent == "purchase":
         product = context.get_last_product()
