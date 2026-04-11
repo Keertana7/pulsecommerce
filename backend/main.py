@@ -1,42 +1,96 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
-
 import threading
 import time
 
+# 🔥 FIREBASE SETUP
+import firebase_admin
+from firebase_admin import credentials, firestore
+
+cred = credentials.Certificate("serviceAccountKey.json")
+firebase_admin.initialize_app(cred)
+
+db = firestore.client()
 
 app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-# 🧠 MEMORY STORAGE
-context = {}
 
-def schedule_message(user_id, text, delay):
-    def send_later():
-        time.sleep(delay)
-        print(f"Reminder for {user_id}: {text}")
-
-    threading.Thread(target=send_later).start()
-
-
-# Request model
+# =========================
+# 📦 REQUEST MODEL
+# =========================
 class MessageRequest(BaseModel):
     user_id: str
     message: str
     channel: str
 
-@app.get("/")
-def home():
-    return {"message": "Backend is running 🚀"}
+
+# =========================
+# 🔥 FETCH USER EVENTS
+# =========================
+def get_user_events(user_id):
+    events_ref = db.collection("events")
+    docs = events_ref.stream()   # 🔥 get ALL data
+
+    events = []
+    for doc in docs:
+        data = doc.to_dict()
+        print("Doc:", data)  # DEBUG
+
+        if data.get("userId") == user_id:
+            events.append(data)
+
+    return events
 
 
-# ⏰ DELAYED MESSAGE FUNCTION
+# =========================
+# 🧠 ANALYZE USER
+# =========================
+def analyze_user(events):
+    views = [e for e in events if e.get("type") == "view"]
+    cart = [e for e in events if e.get("type") == "add_to_cart"]
+    searches = [e for e in events if e.get("type") == "search"]
+
+    if len(cart) > 0:
+        return "cart_abandoned"
+
+    if len(views) > 3:
+        return "high_interest"
+
+    if len(searches) > 2:
+        return "exploring"
+
+    return "unknown"
+
+
+# =========================
+# 🤖 GENERATE MESSAGE
+# =========================
+def generate_message(intent, events):
+    if not events:
+        return "Can I help you with something?"
+
+    # 🔥 FIND CORRECT PRODUCT (IMPORTANT FIX)
+    for event in events:
+        if event.get("type") == "add_to_cart":
+            product = event.get("product", "item")
+
+            if intent == "cart_abandoned":
+                return f"You left {product} in your cart 🛒"
+
+    # fallback logic
+    last_product = events[-1].get("product", "item")
+
+    if intent == "high_interest":
+        return f"Still thinking about {last_product}? 👀"
+
+    elif intent == "exploring":
+        return f"Check out top deals on {last_product} 🔥"
+
+    return "Can I help you with something?"
+
+
+# =========================
+# ⏰ DELAYED MESSAGE
+# =========================
 def schedule_message(user_id, text, delay):
     def send_later():
         time.sleep(delay)
@@ -45,67 +99,43 @@ def schedule_message(user_id, text, delay):
     threading.Thread(target=send_later).start()
 
 
+# =========================
 # 🔥 MAIN API
+# =========================
 @app.post("/message")
 def handle_message(data: MessageRequest):
-
     user = data.user_id
-    msg = data.message.lower()
 
-    # get user context
-    user_ctx = context.get(user, {
-        "last_product": None,
-        "cart_items": [],
-        "last_intent": None
-    })
+    # 🔥 GET DATA FROM FIRESTORE
+    events = get_user_events(user)
+    print("Events:", events)   # DEBUG
 
-    # 🧠 UPDATE CONTEXT
-    if "shoes" in msg:
-        user_ctx["last_product"] = "shoes"
-        user_ctx["last_intent"] = "query"
+    # 🧠 ANALYZE
+    intent = analyze_user(events)
 
-    elif "buy" in msg:
-        product = user_ctx["last_product"]
-
-        if product:
-            user_ctx["cart_items"].append(product)
-            user_ctx["last_intent"] = "buy"
-
-            # ⏰ reminder
-            schedule_message(user, "You left items in cart 🛒", 10)
-
-        else:
-            return {
-                "reply": "What do you want to buy?",
-                "channel": data.channel
-            }
-
-    # 🤖 AI reply
-    reply = ai_response(msg, user_ctx)
-
-    # save context
-    context[user] = user_ctx
+    # 🤖 GENERATE RESPONSE
+    reply = generate_message(intent, events)
 
     return {
-        "reply": reply,
-        "channel": data.channel
+        "channel": data.channel,
+        "user_id": user,
+        "reply": reply
     }
-# 🔥 GET CONTEXT API
+
+
+# =========================
+# 📊 GET CONTEXT (OPTIONAL)
+# =========================
 @app.get("/context/{user_id}")
 def get_context(user_id: str):
-    return context.get(user_id, {})
+    events = get_user_events(user_id)
+    return {"events": events}
 
+
+# =========================
+# ⏰ SCHEDULE API
+# =========================
 @app.post("/schedule-message")
 def schedule_api(user_id: str, message: str, delay: int):
     schedule_message(user_id, message, delay)
-    return {"status": "Message scheduled successfully"}
-
-# 🧠 AI LAYER
-def ai_response(message, context):
-    if "shoes" in message:
-        return "We have Nike & Adidas 👟"
-    elif "buy" in message:
-        return f"{context.get('last_product', 'item')} added to cart 🛒"
-
-    else:
-        return "Sorry, I didn’t understand"
+    return {"status": "Message scheduled"}
