@@ -99,8 +99,17 @@ def generate_message(intent, events):
 # =========================
 def schedule_message(user_id, text, delay):
     def send_later():
+        print("⏳ Waiting...", delay)
         time.sleep(delay)
-        print(f"Reminder for {user_id}: {text}")
+
+        print("🔥 Sending message:", text)
+
+        db.collection("messages").add({
+            "text": text,
+            "sender": "bot",
+            "platform": "WhatsApp",
+            "createdAt": firestore.SERVER_TIMESTAMP
+        })
 
     threading.Thread(target=send_later).start()
 
@@ -121,6 +130,26 @@ def handle_message(data: MessageRequest):
 
     # 🤖 GENERATE RESPONSE
     reply = generate_message(intent, events)
+    if events:
+        last_event = events[-1]
+
+        # 👀 VIEW → reminder
+        if last_event.get("type") == "view":
+            product = last_event.get("product", "item")
+            schedule_message(
+                user,
+                f"Still thinking about {product}? 👀",
+                5  # 5 seconds
+            )
+
+        # 🛒 ADD TO CART → reminder
+        if last_event.get("type") == "add_to_cart":
+            product = last_event.get("product", "item")
+            schedule_message(
+                user,
+                f"You left {product} in your cart 🛒",
+                5
+            )
 
     return {
         "channel": data.channel,

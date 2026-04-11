@@ -2,7 +2,7 @@ import "./Chat.css";
 import { useState, useEffect } from "react";
 import { db } from "../firebase/firebase";
 import { useRef } from "react";
-
+import { showCartReminder } from "../utils/notifications";
 import {
   collection,
   addDoc,
@@ -24,6 +24,10 @@ export default function Chat() {
   const [smsInput, setSmsInput] = useState("");
   const [platform, setPlatform] = useState("WhatsApp");
   const [aiProducts, setAiProducts] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [added, setAdded] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+
   useEffect(() => {
   bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 }, [messages]);
@@ -45,17 +49,18 @@ export default function Chat() {
       .then(res => res.json())
       .then(data => setProducts(data.products));
   }, []);
+
   const sendMessage = async (platform, inputValue, setInputFn) => {
   if (!inputValue) return;
 
-  try {
+    try {
     await addDoc(collection(db, "messages"), {
       text: inputValue,
       sender: "user",
       platform: platform,
       createdAt: serverTimestamp()
     });
-
+    // backend call
     const res = await fetch("http://127.0.0.1:8000/message", {
       method: "POST",
       headers: {
@@ -67,23 +72,21 @@ export default function Chat() {
         channel: platform
       }),
     });
+    
     const aiRes = await fetch("http://127.0.0.1:8001/generate-response", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    message: inputValue,
-    user_id: "user_123"
-  }),
-});
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: inputValue,
+        user_id: "user_123"
+      }),
+    });
 
-const aiData = await aiRes.json();
-
-// 🔥 STORE PRODUCTS HERE
-setAiProducts(aiData.products || []);
-
+    const aiData = await aiRes.json();
     const data = await res.json();
+    setAiProducts(aiData.products || []);
 
     await addDoc(collection(db, "messages"), {
       text: aiData.reply || "No response",
@@ -118,8 +121,24 @@ setAiProducts(aiData.products || []);
 });
 
   const addToCart = (product) => {
-    setCart([...cart, product]);
-    trackEvent("add_to_cart", product.title || product.name);
+    setCart((prevCart) => [...prevCart, product]);
+
+  trackEvent("add_to_cart", product.title || product.name);
+
+  // 🔔 trigger reminder
+  setTimeout(() => {
+    showCartReminder();
+  }, 10000); // demo delay
+  const name = product.title || product.name || "Item";
+  // 🔔 add notification
+  setNotifications((prev) => [
+    {
+      id: Date.now(), 
+      message: `${name} added to cart`,
+      time: new Date().toLocaleTimeString()
+    },
+    ...prev
+  ]);
   };
  
   const trackEvent = async (type, product) => {
@@ -132,6 +151,17 @@ setAiProducts(aiData.products || []);
       userId: "user_123",
       timestamp: serverTimestamp()
     });
+    await fetch("http://127.0.0.1:8000/message", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: type,
+        user_id: "user_123",
+        channel: "WhatsApp"
+      }),
+    });
   } catch (err) {
     console.error("Error storing event:", err);
   }
@@ -139,7 +169,7 @@ setAiProducts(aiData.products || []);
   return (
     <div className="dashboard">
     <div className="top-bar">
-
+    
   <input
     placeholder="Search products..."
     value={search}
@@ -165,7 +195,20 @@ setAiProducts(aiData.products || []);
   </div>
 
 </div>
+  <div className="notifications-panel">
+  <h3>Notifications</h3>
 
+  {notifications.length === 0 ? (
+    <p className="notification-empty">No recent notifications.</p>
+  ) : (
+    notifications.slice(0, 3).map((n) => (
+      <div key={n.id} className="notification-item">
+        <div className="notification-message">{n.message}</div>
+        <div className="notification-time">{n.time}</div>
+      </div>
+    ))
+  )}
+</div>
   {aiProducts.length > 0 && (
   <h3>🔥 Recommended for you</h3>
 )}
@@ -180,16 +223,57 @@ setAiProducts(aiData.products || []);
           <h4>{p.title || p.name}</h4>
           <p>₹ {p.price || "N/A"}</p>
 
-          <button onClick={() => trackEvent("view", p.title || p.name)}>
+          <button onClick={() => {
+            trackEvent("view", p.title || p.name);
+            setSelectedProduct(p);
+            }}>
             View
           </button>
-
+          
           <button onClick={() => addToCart(p)}>
             Add to Cart
           </button>
         </div>
       ))}
     </div>
+    {selectedProduct && (
+  <div className="modal-overlay">
+    <div className="modal-content">
+
+      <button 
+        className="close-btn"
+        onClick={() => setSelectedProduct(null)}
+      >
+        ⬅ 
+      </button>
+
+      <img 
+        src={selectedProduct.thumbnail || selectedProduct.image} 
+        style={{ width: "100%", borderRadius: "10px" }}
+      />
+
+      <h2>{selectedProduct.title || selectedProduct.name}</h2>
+      <p>₹ {selectedProduct.price}</p>
+
+      <button 
+        className="add-cart-btn"
+        onClick={() => {
+          addToCart(selectedProduct);
+          setAdded(true);
+
+          setTimeout(() => setAdded(false), 2000); // reset after 2 sec
+          }}
+      >
+      {added ? "Added ✅" : "Add to Cart"}
+      </button>
+
+      <button className="buy-now-btn">
+         Buy Now
+      </button>
+
+    </div>
+  </div>
+)}
 
   </div>
 

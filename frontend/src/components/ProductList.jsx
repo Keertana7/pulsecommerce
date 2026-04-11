@@ -11,10 +11,8 @@ export default function ProductList() {
 
   return (
     <div>
-      <h2>Products</h2>
-      <button onClick={handleAddToCart}>
-        Add Shoes to Cart
-      </button>
+      <h2 className="products-title">Products</h2>
+      
     </div>
   );
 }
