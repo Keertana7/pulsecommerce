@@ -296,12 +296,17 @@
 }
 /* RIGHT PANEL */
 .side-panel h2 {
+  color:orangered;
   margin-bottom: 20px;
   font-size: 20px;
   letter-spacing: 1px;
+  font-family: 'Inter', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 .card {
-  background: rgba(31, 41, 55, 0.9);
+  background: rgba(237, 199, 235, 0.9);
   backdrop-filter: blur(10px);
   padding: 12px;
   border-radius: 10px;
@@ -312,7 +317,7 @@
 
 .card:hover {
   transform: translateY(-2px);
-  background: #374151;
+  background: #fd6aff;
 }
 
 .top-bar {

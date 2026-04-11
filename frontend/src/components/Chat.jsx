@@ -195,20 +195,7 @@ export default function Chat() {
   </div>
 
 </div>
-  <div className="notifications-panel">
-  <h3>Notifications</h3>
-
-  {notifications.length === 0 ? (
-    <p className="notification-empty">No recent notifications.</p>
-  ) : (
-    notifications.slice(0, 3).map((n) => (
-      <div key={n.id} className="notification-item">
-        <div className="notification-message">{n.message}</div>
-        <div className="notification-time">{n.time}</div>
-      </div>
-    ))
-  )}
-</div>
+  
   {aiProducts.length > 0 && (
   <h3>🔥 Recommended for you</h3>
 )}
@@ -395,25 +382,30 @@ export default function Chat() {
     <h2>PulseCommerce</h2>
 
     <div className="card">
-      <b>Unified Inbox</b><br/>
+      <b>📥 Unified Inbox</b><br/>
       WhatsApp • Instagram • SMS
     </div>
 
     <div className="card">
-      <b>Flow Builder</b><br/>
-      Cart Abandoned → WhatsApp Nudge
+      <b>🔁 Flow Builder</b><br/>
+      🛒 Cart Abandoned<br/>
+              ↓<br/>
+      📩 WhatsApp Reminder<br/>
+              ↓<br/>
+      💳 Conversion
     </div>
 
     <div className="card">
-      <b>Consent</b><br/>
-      ☑ Transactional<br/>
+      <b>🔒 Consent </b><br/>
+      ☑ Transactional  <br/>
       ☐ Marketing
     </div>
 
     <div className="card">
-      <b>Impact</b><br/>
-      Cart Recovery ↑ 100%<br/>
-      ROI: 8.5x
+      <b>📊 Impact</b><br/>
+      📈 +30% engagement<br/>
+      🛒 Reduced cart abandonment<br/>
+      🤖 Zero manual intervention<br/>
     </div>
 
 
