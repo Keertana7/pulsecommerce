@@ -23,6 +23,7 @@ export default function Chat() {
   const [instagramInput, setInstagramInput] = useState("");
   const [smsInput, setSmsInput] = useState("");
   const [platform, setPlatform] = useState("WhatsApp");
+  const [aiProducts, setAiProducts] = useState([]);
   useEffect(() => {
   bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 }, [messages]);
@@ -66,11 +67,26 @@ export default function Chat() {
         channel: platform
       }),
     });
+    const aiRes = await fetch("http://127.0.0.1:8001/generate-response", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    message: inputValue,
+    user_id: "user_123"
+  }),
+});
+
+const aiData = await aiRes.json();
+
+// 🔥 STORE PRODUCTS HERE
+setAiProducts(aiData.products || []);
 
     const data = await res.json();
 
     await addDoc(collection(db, "messages"), {
-      text: data.reply || "No response",
+      text: aiData.reply || "No response",
       sender: "bot",
       platform: platform,
       createdAt: serverTimestamp()
@@ -103,7 +119,7 @@ export default function Chat() {
 
   const addToCart = (product) => {
     setCart([...cart, product]);
-    trackEvent("add_to_cart", product.title);
+    trackEvent("add_to_cart", product.title || product.name);
   };
  
   const trackEvent = async (type, product) => {
@@ -128,12 +144,16 @@ export default function Chat() {
     placeholder="Search products..."
     value={search}
     onChange={(e) => {
-    setSearch(e.target.value);
-    trackEvent("search", e.target.value);
-}}
+      setSearch(e.target.value);
+      setAiProducts([]); // 🔥 ADD THIS LINE
+      trackEvent("search", e.target.value);
+    }}
   />
 
-  <select onChange={(e) => setPriceFilter(e.target.value)}>
+  <select onChange={(e) => {
+  setPriceFilter(e.target.value);
+  setAiProducts([]); // 🔥 ADD THIS
+}}>
     <option value="all">All Prices</option>
     <option value="low">Low</option>
     <option value="medium">Medium</option>
@@ -146,19 +166,21 @@ export default function Chat() {
 
 </div>
 
-
+  {aiProducts.length > 0 && (
+  <h3>🔥 Recommended for you</h3>
+)}
 
   {/* PRODUCTS SECTION */}
   <div className="products-section">
 
     <div className="product-grid">
-      {filteredProducts.map((p) => (
+      {(aiProducts.length > 0 ? aiProducts : filteredProducts).map((p) => (
         <div key={p.id} className="product-card">
-          <img src={p.thumbnail} alt={p.title} />
-          <h4>{p.title}</h4>
-          <p>₹ {p.price}</p>
+          <img src={p.thumbnail || p.image || "https://via.placeholder.com/150"} />
+          <h4>{p.title || p.name}</h4>
+          <p>₹ {p.price || "N/A"}</p>
 
-          <button onClick={() => trackEvent("view", p.title)}>
+          <button onClick={() => trackEvent("view", p.title || p.name)}>
             View
           </button>
 

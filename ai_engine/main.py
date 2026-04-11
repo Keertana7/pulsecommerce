@@ -7,12 +7,18 @@ from intent import IntentDetector
 from context import ConversationContext
 from recommend import recommend_products
 from response import generate_response
-
+from fastapi.middleware.cors import CORSMiddleware
 # =========================
 # 🚀 INIT APP
 # =========================
 app = FastAPI(title="AI Messaging Engine")
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 detector = IntentDetector()
 
 # =========================

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import threading
 import time
-
+from fastapi.middleware.cors import CORSMiddleware
 # 🔥 FIREBASE SETUP
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -13,7 +13,13 @@ firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 app = FastAPI()
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # allow all (for hackathon)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # =========================
 # 📦 REQUEST MODEL
 # =========================
